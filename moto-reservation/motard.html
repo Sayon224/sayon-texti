@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAYON MOTO TAXI EXPRESS – Motard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f0f2f5; min-height:100vh; overflow-x:hidden; }
+
+        /* ══ HEADER ══ */
+        header {
+            background: linear-gradient(135deg,#1a1a2e,#0f3460);
+            color: white;
+            padding: 0.9rem 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .h-left { display:flex; align-items:center; gap:1rem; }
+        .back-btn {
+            width:36px; height:36px;
+            background:rgba(255,255,255,0.08);
+            border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            color:white; text-decoration:none; font-size:1.1rem;
+            transition:background 0.2s; flex-shrink:0;
+        }
+        .back-btn:hover { background:rgba(255,255,255,0.18); }
+        .header-text .header-title { font-size:0.92rem; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; }
+        .header-text .header-title span { color:#FFD700; }
+        .header-text .header-sub { font-size:0.62rem; color:rgba(255,255,255,0.4); font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-top:0.1rem; }
+        .bell-btn {
+            position:relative; font-size:1.45rem; cursor:pointer;
+            width:38px; height:38px;
+            background:rgba(255,255,255,0.06);
+            border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            transition:background 0.2s;
+        }
+        .bell-btn:hover { background:rgba(255,255,255,0.15); }
+        .bell-badge {
+            position:absolute; top:-3px; right:-3px;
+            background:#FF6B00; color:white;
+            border-radius:50%; width:18px; height:18px;
+            font-size:0.62rem;
+            display:flex; align-items:center; justify-content:center;
+            font-weight:900;
+            animation:bp 1.2s infinite;
+            border:2px solid #1a1a2e;
+        }
+        @keyframes bp { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+
+        /* ══ TICKER ══ */
+        .ticker-bar {
+            width:100%; background:rgba(0,0,0,0.5);
+            border-bottom:1px solid rgba(255,215,0,0.1);
+            display:flex; align-items:center; overflow:hidden; height:34px;
+        }
+        .ticker-label {
+            background:linear-gradient(135deg,#FF6B00,#ff8c42);
+            color:white; font-size:0.58rem; font-weight:900;
+            letter-spacing:1.5px; text-transform:uppercase;
+            padding:0 0.75rem; height:100%;
+            display:flex; align-items:center; white-space:nowrap; flex-shrink:0;
+        }
+        .ticker-wrap { overflow:hidden; flex:1; background:rgba(0,0,0,0.3); }
+        .ticker-track { display:flex; animation:tickerScroll 32s linear infinite; width:max-content; }
+        .ticker-track:hover { animation-play-state:paused; }
+        @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        .ti { display:inline-flex; align-items:center; gap:0.3rem; padding:0 1.2rem; font-size:0.72rem; font-weight:700; white-space:nowrap; height:34px; border-right:1px solid rgba(255,255,255,0.05); }
+        .ti-fanta { color:#FFAB40; } .ti-coca { color:#FF8A80; font-family:'Dancing Script',serif; font-size:0.92rem; }
+        .ti-ira { color:#69F0AE; } .ti-lyon { color:#90CAF9; }
+
+        /* ══ FB STATUS ══ */
+        #fb-status-bar { padding:0.55rem 1rem; font-size:0.8rem; font-weight:700; text-align:center; }
+        .fb-error { background:#fff3f3; border-left:4px solid #ef5350; padding:0.8rem 1.2rem; font-size:0.83rem; color:#c62828; display:none; }
+
+        /* ══ LAYOUT ══ */
+        .hidden { display:none !important; }
+        .main { max-width:480px; margin:1.2rem auto; padding:0 1rem 1rem; display:flex; flex-direction:column; gap:1rem; }
+
+        /* ══ PROFILE CARD ══ */
+        .profile-card { background:white; border-radius:24px; padding:1.5rem 1.6rem; box-shadow:0 4px 30px rgba(0,0,0,0.08); }
+        .profile-card-title { font-size:0.85rem; font-weight:900; color:#1a1a2e; margin-bottom:1.1rem; display:flex; align-items:center; gap:0.5rem; }
+        .profile-card-title .pt-badge { background:linear-gradient(135deg,#FF6B00,#ff8c42); color:white; font-size:0.6rem; font-weight:900; padding:0.2rem 0.6rem; border-radius:20px; letter-spacing:0.5px; }
+
+        .g2 { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+        .g2 input {
+            padding:0.82rem 0.9rem; border:2px solid #eee; border-radius:13px;
+            font-size:0.93rem; outline:none; transition:all 0.2s;
+            font-family:inherit; background:#fafafa; color:#1a1a2e; width:100%;
+        }
+        .g2 input:focus { border-color:#FFD700; background:white; box-shadow:0 0 0 4px rgba(255,215,0,0.1); }
+        .btn-register {
+            grid-column:1/-1; padding:0.9rem;
+            background:linear-gradient(135deg,#4CAF50,#43a047);
+            color:white; border:none; border-radius:13px;
+            font-size:0.97rem; font-weight:900; cursor:pointer;
+            margin-top:0.2rem; transition:all 0.25s; letter-spacing:0.3px;
+            box-shadow:0 4px 16px rgba(76,175,80,0.3);
+        }
+        .btn-register:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(76,175,80,0.4); }
+        .reg-hint { font-size:0.74rem; color:#bbb; text-align:center; margin-top:0.7rem; }
+
+        /* Profil affiché */
+        .profile-display { display:flex; align-items:center; gap:1rem; }
+        .p-avatar {
+            width:48px; height:48px;
+            background:linear-gradient(135deg,#FFD700,#FF6B00);
+            border-radius:50%; display:flex; align-items:center; justify-content:center;
+            font-size:1.5rem; flex-shrink:0;
+        }
+        .p-name  { font-size:1rem; font-weight:800; color:#1a1a2e; }
+        .p-phone { font-size:0.82rem; color:#FF6B00; font-weight:700; margin-top:0.1rem; }
+        .btn-edit {
+            margin-left:auto; padding:0.38rem 0.8rem;
+            background:transparent; color:#aaa;
+            border:1.5px solid #eee; border-radius:9px;
+            font-size:0.77rem; cursor:pointer; transition:all 0.2s;
+        }
+        .btn-edit:hover { border-color:#FF6B00; color:#FF6B00; }
+
+        .status-strip { display:flex; align-items:center; gap:0.8rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #f5f5f5; }
+        .s-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; transition:background 0.3s; }
+        .s-dot-on  { background:#4CAF50; animation:blink 2s infinite; }
+        .s-dot-off { background:#ddd; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        .s-info { flex:1; }
+        .s-label { font-size:0.88rem; font-weight:800; color:#1a1a2e; }
+        .s-sub   { font-size:0.7rem; color:#bbb; }
+        .btn-pause {
+            padding:0.4rem 0.9rem;
+            background:#fff3f3; border:1.5px solid #ffcdd2;
+            border-radius:10px; color:#c62828;
+            font-size:0.78rem; font-weight:700;
+            cursor:pointer; transition:all 0.2s; white-space:nowrap;
+        }
+        .btn-pause:hover { background:#ef5350; color:white; border-color:#ef5350; }
+
+        /* ══ IDLE CARD ══ */
+        .idle-card { background:white; border-radius:24px; padding:2rem 1.5rem; box-shadow:0 4px 30px rgba(0,0,0,0.08); text-align:center; }
+        .radar-wrap {
+            position:relative; width:96px; height:96px;
+            margin:0 auto 1.4rem;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .radar-ring {
+            position:absolute; border-radius:50%;
+            border:2px solid rgba(255,215,0,0.3);
+            animation:radarOut 2.5s ease-out infinite;
+        }
+        .rr1 { width:96px; height:96px; animation-delay:0s; }
+        .rr2 { width:68px; height:68px; animation-delay:0.7s; border-color:rgba(255,215,0,0.45); }
+        .rr3 { width:44px; height:44px; animation-delay:1.4s; border-color:rgba(255,215,0,0.65); }
+        @keyframes radarOut { 0%{transform:scale(0.7);opacity:0.9} 100%{transform:scale(1.5);opacity:0} }
+        .radar-icon { font-size:2.4rem; z-index:1; }
+        .idle-title { font-size:1.05rem; font-weight:900; color:#1a1a2e; margin-bottom:0.3rem; }
+        .idle-sub   { color:#bbb; font-size:0.84rem; line-height:1.5; }
+        .online-dot { display:inline-block; width:8px; height:8px; background:#4CAF50; border-radius:50%; margin-right:0.4rem; animation:blink 2s infinite; }
+
+        /* ══ REQUEST CARD ══ */
+        .request-card {
+            background:white; border-radius:24px;
+            box-shadow:0 12px 50px rgba(255,107,0,0.18);
+            border:2px solid rgba(255,107,0,0.3);
+            overflow:hidden;
+            animation:slideUp 0.45s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        @keyframes slideUp { from{transform:translateY(28px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .rq-head {
+            background:linear-gradient(135deg,#FF6B00,#ff8c42);
+            padding:1rem 1.4rem;
+            display:flex; align-items:center; gap:0.9rem;
+        }
+        .rq-icon { font-size:1.8rem; }
+        .rq-title { color:white; font-size:1rem; font-weight:900; }
+        .rq-sub   { color:rgba(255,255,255,0.75); font-size:0.76rem; }
+        .new-pill {
+            margin-left:auto; background:white; color:#FF6B00;
+            padding:0.25rem 0.7rem; border-radius:20px;
+            font-size:0.68rem; font-weight:900;
+            animation:bp 1.2s infinite; letter-spacing:0.5px;
+        }
+        .rq-body { padding:1.3rem 1.4rem; }
+        .rq-row { display:flex; align-items:flex-start; gap:0.85rem; margin-bottom:0.9rem; }
+        .rq-ico { width:38px; height:38px; background:#fff7f0; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+        .rq-l { font-size:0.68rem; color:#bbb; margin-bottom:0.15rem; text-transform:uppercase; letter-spacing:0.8px; }
+        .rq-v { font-size:0.97rem; font-weight:700; color:#1a1a2e; }
+        .btn-call-c {
+            display:flex; align-items:center; justify-content:center; gap:0.5rem;
+            width:100%; padding:0.82rem;
+            background:linear-gradient(135deg,#4CAF50,#43a047);
+            color:white; border:none; border-radius:13px;
+            font-size:0.92rem; font-weight:800; cursor:pointer;
+            text-decoration:none; margin-bottom:0.9rem;
+            transition:all 0.25s;
+            box-shadow:0 4px 16px rgba(76,175,80,0.25);
+        }
+        .btn-call-c:hover { transform:translateY(-2px); box-shadow:0 8px 26px rgba(76,175,80,0.4); }
+        .action-row { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
+        .btn-accept {
+            padding:1rem; background:linear-gradient(135deg,#4CAF50,#66BB6A);
+            color:white; border:none; border-radius:13px;
+            font-size:1rem; font-weight:900; cursor:pointer;
+            transition:all 0.25s;
+            box-shadow:0 4px 16px rgba(76,175,80,0.3);
+        }
+        .btn-accept:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(76,175,80,0.4); }
+        .btn-refuse {
+            padding:1rem; background:linear-gradient(135deg,#ef5350,#e53935);
+            color:white; border:none; border-radius:13px;
+            font-size:1rem; font-weight:900; cursor:pointer;
+            transition:all 0.25s;
+            box-shadow:0 4px 16px rgba(239,83,80,0.3);
+        }
+        .btn-refuse:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(239,83,80,0.4); }
+
+        /* ══ ACCEPTED CARD ══ */
+        .acc-card { background:white; border-radius:24px; padding:2rem 1.5rem; box-shadow:0 4px 30px rgba(0,0,0,0.08); text-align:center; }
+        .acc-icon {
+            width:84px; height:84px;
+            background:linear-gradient(135deg,#4CAF50,#66BB6A);
+            border-radius:50%; display:flex; align-items:center; justify-content:center;
+            font-size:2.4rem; margin:0 auto 1.4rem;
+            animation:popIn 0.55s cubic-bezier(0.175,0.885,0.32,1.275);
+            box-shadow:0 8px 28px rgba(76,175,80,0.35);
+        }
+        @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+        .acc-title { font-size:1.15rem; font-weight:900; color:#1a1a2e; }
+        .acc-sub   { color:#aaa; font-size:0.84rem; margin-top:0.25rem; }
+        .dest-box {
+            background:linear-gradient(135deg,#f1fff6,#e8f5e9);
+            border:1.5px solid #c8e6c9; border-radius:15px;
+            padding:1rem 1.2rem; margin:1.1rem 0; text-align:left;
+        }
+        .db-l { font-size:0.68rem; color:#aaa; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.25rem; }
+        .db-v { font-size:1rem; font-weight:700; color:#2e7d32; }
+        .btn-finish {
+            width:100%; padding:0.9rem;
+            background:linear-gradient(135deg,#1a1a2e,#0f3460);
+            color:white; border:none; border-radius:14px;
+            font-size:0.95rem; font-weight:800; cursor:pointer;
+            transition:all 0.25s;
+        }
+        .btn-finish:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(26,26,46,0.35); }
+
+        /* ══ AD CAROUSEL ══ */
+        .ad-section { }
+        .ad-sec-label { font-size:0.58rem; color:#ccc; text-transform:uppercase; letter-spacing:2px; text-align:center; margin-bottom:0.6rem; font-weight:700; }
+        .ad-carousel { position:relative; height:112px; border-radius:22px; overflow:hidden; box-shadow:0 6px 28px rgba(0,0,0,0.12); }
+        .ad-slide {
+            position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center;
+            padding:1rem 1.3rem; transform:translateY(110%); opacity:0;
+            transition:transform 0.65s cubic-bezier(0.4,0,0.2,1), opacity 0.5s;
+        }
+        .ad-slide.active  { transform:translateY(0); opacity:1; }
+        .ad-slide.leaving { transform:translateY(-110%); opacity:0; transition-timing-function:ease-in; transition-duration:0.55s; }
+        .as-fanta { background:linear-gradient(135deg,#FF6A00,#EE8A1A); }
+        .as-coca  { background:linear-gradient(135deg,#B71C1C,#E53935); }
+        .as-ira   { background:linear-gradient(135deg,#1B5E20,#43A047); }
+        .as-lyon  { background:linear-gradient(135deg,#1a1a1a,#333); }
+        .as-brand { font-size:1.25rem; font-weight:900; color:white; line-height:1.1; margin-bottom:0.18rem; }
+        .as-brand.f-fanta { font-family:'Arial Rounded MT Bold','Arial Black',sans-serif; }
+        .as-brand.f-coca  { font-family:'Dancing Script',serif; font-size:1.55rem; }
+        .as-desc  { font-size:0.72rem; color:rgba(255,255,255,0.85); font-weight:500; }
+        .as-badge {
+            position:absolute; top:0.7rem; right:0.8rem;
+            background:rgba(255,255,255,0.18); color:white;
+            font-size:0.57rem; font-weight:900;
+            padding:0.17rem 0.55rem; border-radius:20px;
+            letter-spacing:0.8px; text-transform:uppercase;
+        }
+        .ad-dots { display:flex; justify-content:center; gap:0.4rem; margin-top:0.65rem; }
+        .ap-dot { height:4px; border-radius:2px; background:rgba(0,0,0,0.1); transition:all 0.4s; width:16px; }
+        .ap-dot.active { background:#FF6B00; width:28px; }
+
+        /* ══ MAP GPS ══ */
+        .map-box { border-radius:16px; overflow:hidden; margin:0.9rem 0; box-shadow:0 4px 20px rgba(0,0,0,0.12); }
+        #motard-map { width:100%; height:220px; }
+        .gps-info {
+            background:#f8f9ff; border:1.5px solid #e8eaf6; border-radius:12px;
+            padding:0.65rem 1rem; margin-bottom:0.6rem;
+            font-size:0.82rem; color:#333; font-weight:600; text-align:center;
+            transition:all 0.3s;
+        }
+        .gps-info.near    { background:#fff8e1; border-color:#ffe082; color:#e65100; }
+        .gps-info.arrived { background:#e8f5e9; border-color:#a5d6a7; color:#2e7d32; }
+
+        /* ══ AUTH ══ */
+        .auth-card { background:white; border-radius:24px; padding:2rem 1.6rem; box-shadow:0 4px 30px rgba(0,0,0,0.08); }
+        .auth-logo { text-align:center; margin-bottom:1.8rem; }
+        .auth-logo .al-em { font-size:3.8rem; display:block; margin-bottom:0.5rem; filter:drop-shadow(0 4px 12px rgba(255,107,0,0.4)); }
+        .auth-logo .al-t { font-size:1.15rem; font-weight:900; color:#1a1a2e; text-transform:uppercase; letter-spacing:0.5px; }
+        .auth-logo .al-s { font-size:0.74rem; color:#bbb; margin-top:0.2rem; }
+        .auth-tabs { display:flex; background:#f5f5f5; border-radius:13px; padding:4px; margin-bottom:1.4rem; gap:4px; }
+        .auth-tab { flex:1; padding:0.6rem; border:none; background:transparent; border-radius:10px; font-size:0.85rem; font-weight:800; cursor:pointer; color:#bbb; transition:all 0.25s; }
+        .auth-tab.active { background:white; color:#1a1a2e; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .auth-err { border-radius:12px; padding:0.7rem 1rem; font-size:0.82rem; margin-bottom:0.9rem; text-align:center; font-weight:600; }
+        .auth-err.err { background:#fff3f3; border:1.5px solid #ffcdd2; color:#c62828; }
+        .auth-err.ok  { background:#f0fff4; border:1.5px solid #4CAF50; color:#2e7d32; }
+        .g2 input { padding:0.82rem 0.9rem; border:2px solid #eee; border-radius:13px; font-size:0.93rem; outline:none; transition:all 0.2s; font-family:inherit; background:#fafafa; color:#1a1a2e; width:100%; }
+        .g2 input:focus { border-color:#FFD700; background:white; box-shadow:0 0 0 4px rgba(255,215,0,0.1); }
+
+        /* ══ TOAST ══ */
+        .toast {
+            position:fixed; bottom:1.5rem; left:50%;
+            transform:translateX(-50%) translateY(20px);
+            background:#1a1a2e; color:white;
+            padding:0.75rem 1.4rem; border-radius:30px;
+            font-size:0.88rem; font-weight:600;
+            opacity:0; transition:all 0.35s;
+            z-index:300; white-space:nowrap; pointer-events:none;
+            box-shadow:0 8px 30px rgba(0,0,0,0.25);
+        }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="h-left">
+        <a href="index.html" class="back-btn">←</a>
+        <div class="header-text">
+            <div class="header-title">🏍️ SAYON MOTO TAXI <span>EXPRESS</span></div>
+            <div class="header-sub">Espace Motard</div>
+        </div>
+    </div>
+    <div class="bell-btn" onclick="scrollToReq()">
+        🔔
+        <div class="bell-badge hidden" id="notif-badge">1</div>
+    </div>
+</header>
+
+<div id="fb-status-bar" style="background:#fff3e0;color:#e65100;padding:0.5rem 1rem;font-size:0.8rem;font-weight:700;text-align:center;">🔄 Connexion Firebase en cours…</div>
+
+<div class="ticker-bar">
+    <span class="ticker-label">▶ Pub</span>
+    <div class="ticker-wrap">
+        <div class="ticker-track">
+            <span class="ti ti-fanta">🍊 Fanta · Fraîche &amp; Pétillante</span>
+            <span class="ti ti-coca">🥤 Coca-Cola · La vraie saveur</span>
+            <span class="ti ti-ira">🍹 JUSS IRA · 100% Fruits naturels</span>
+            <span class="ti ti-lyon"> iPhone · BOUTIQUE LYON BUSINESS · Madina</span>
+            <span class="ti ti-fanta">🍊 Fanta · Fraîche &amp; Pétillante</span>
+            <span class="ti ti-coca">🥤 Coca-Cola · La vraie saveur</span>
+            <span class="ti ti-ira">🍹 JUSS IRA · 100% Fruits naturels</span>
+            <span class="ti ti-lyon"> iPhone · BOUTIQUE LYON BUSINESS · Madina</span>
+        </div>
+    </div>
+</div>
+
+<div id="fb-error" class="fb-error">⚠️ Firebase non configuré – Remplissez <strong>firebase-config.js</strong></div>
+
+<div class="main">
+
+    <!-- AUTH -->
+    <div id="state-auth" class="auth-card">
+        <div class="auth-logo">
+            <span class="al-em">🏍️</span>
+            <div class="al-t">Sayon Moto Taxi</div>
+            <div class="al-s">Espace Motard — Votre compte</div>
+        </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-login"    onclick="mSwitchTab('login')">🔓 Se connecter</button>
+            <button class="auth-tab"        id="tab-register" onclick="mSwitchTab('register')">✨ Créer un compte</button>
+        </div>
+        <div id="m-auth-msg" class="auth-err hidden"></div>
+        <!-- CONNEXION -->
+        <div id="m-login-form">
+            <div class="g2" style="grid-template-columns:1fr;gap:0.8rem">
+                <input type="tel"      id="ml-phone" placeholder="📞 Votre téléphone" />
+                <input type="password" id="ml-pass"  placeholder="🔒 Mot de passe" />
+                <button class="btn-register" onclick="mDoLogin()">🔓 Se connecter</button>
+            </div>
+        </div>
+        <!-- CRÉATION -->
+        <div id="m-register-form" class="hidden">
+            <div class="g2" style="grid-template-columns:1fr;gap:0.8rem">
+                <input type="text"     id="mr-name"    placeholder="👤 Votre nom complet" />
+                <input type="tel"      id="mr-phone"   placeholder="📞 Votre téléphone" />
+                <input type="password" id="mr-pass"    placeholder="🔒 Mot de passe (min 4 car.)" />
+                <input type="password" id="mr-confirm" placeholder="🔒 Confirmer le mot de passe" />
+                <button class="btn-register" onclick="mDoRegister()">✅ Créer mon compte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFIL (masqué jusqu'à connexion) -->
+    <div class="profile-card hidden" id="motard-profile-card">
+        <div class="profile-card-title">
+            👤 Mon profil
+            <span class="pt-badge">MOTARD</span>
+        </div>
+        <div id="profile-form" class="hidden"></div>
+        <div id="profile-display" class="hidden">
+            <div class="profile-display">
+                <div class="p-avatar">🏍️</div>
+                <div>
+                    <div class="p-name"  id="disp-name">—</div>
+                    <div class="p-phone" id="disp-phone">—</div>
+                </div>
+                <button class="btn-edit" onclick="mDoLogout()">🚪 Déconnexion</button>
+            </div>
+            <div class="status-strip">
+                <div class="s-dot" id="s-dot"></div>
+                <div class="s-info">
+                    <div class="s-label" id="s-label">—</div>
+                    <div class="s-sub"   id="s-sub">—</div>
+                </div>
+                <button class="btn-pause" onclick="goOffline()">⏸ Pause</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATE : EN ATTENTE -->
+    <div id="state-idle" class="idle-card hidden">
+        <div class="radar-wrap">
+            <div class="radar-ring rr1"></div>
+            <div class="radar-ring rr2"></div>
+            <div class="radar-ring rr3"></div>
+            <span class="radar-icon">🏍️</span>
+        </div>
+        <div class="idle-title"><span class="online-dot"></span>En ligne · En attente</div>
+        <div class="idle-sub">Les clients peuvent vous voir<br>et vous envoyer des demandes de course</div>
+    </div>
+
+    <!-- STATE : DEMANDE REÇUE -->
+    <div id="state-request" class="request-card hidden">
+        <div class="rq-head">
+            <div class="rq-icon">📢</div>
+            <div>
+                <div class="rq-title">Nouvelle course !</div>
+                <div class="rq-sub">Un client vous attend</div>
+            </div>
+            <div class="new-pill">NOUVEAU</div>
+        </div>
+        <div class="rq-body">
+            <div class="rq-row">
+                <div class="rq-ico">👤</div>
+                <div><div class="rq-l">Client</div><div class="rq-v" id="rq-name">—</div></div>
+            </div>
+            <div class="rq-row">
+                <div class="rq-ico">📍</div>
+                <div><div class="rq-l">Destination</div><div class="rq-v" id="rq-dest">—</div></div>
+            </div>
+            <div class="rq-row">
+                <div class="rq-ico">⏰</div>
+                <div><div class="rq-l">Heure de la demande</div><div class="rq-v" id="rq-time">—</div></div>
+            </div>
+            <a id="btn-call-client" href="tel:" class="btn-call-c hidden">📞 Appeler le client directement</a>
+            <div class="action-row">
+                <button class="btn-accept" onclick="acceptRequest()">✓ Accepter</button>
+                <button class="btn-refuse" onclick="refuseRequest()">✕ Refuser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATE : COURSE ACCEPTÉE -->
+    <div id="state-accepted" class="acc-card hidden">
+        <div class="acc-icon">✓</div>
+        <div class="acc-title">Course acceptée !</div>
+        <div class="acc-sub">Le client a été notifié de votre arrivée</div>
+        <div class="dest-box">
+            <div class="db-l">📍 Votre destination</div>
+            <div class="db-v" id="acc-dest">—</div>
+        </div>
+        <div id="motard-gps-msg" class="gps-info">📡 Démarrage GPS…</div>
+        <div class="map-box">
+            <div id="motard-map"></div>
+        </div>
+        <button class="btn-finish" onclick="finishRide()">🏁 Terminer la course</button>
+    </div>
+
+    <!-- AD CAROUSEL -->
+    <div class="ad-section">
+        <p class="ad-sec-label">▶ Publicité · Nos partenaires</p>
+        <div class="ad-carousel">
+            <div class="ad-slide as-fanta active">
+                <span class="as-badge">Partenaire</span>
+                <div class="as-brand f-fanta">🍊 Fanta</div>
+                <div class="as-desc">Fraîche, Pétillante &amp; Délicieuse — Disponible partout</div>
+            </div>
+            <div class="ad-slide as-coca">
+                <span class="as-badge">Partenaire</span>
+                <div class="as-brand f-coca">Coca-Cola</div>
+                <div class="as-desc">🥤 La vraie saveur originale depuis 1886</div>
+            </div>
+            <div class="ad-slide as-ira">
+                <span class="as-badge">Partenaire</span>
+                <div class="as-brand">🍹 JUSS IRA</div>
+                <div class="as-desc">Jus 100% naturels · Vitaminé &amp; Sain · Fait en Guinée</div>
+            </div>
+            <div class="ad-slide as-lyon">
+                <span class="as-badge">Partenaire</span>
+                <div class="as-brand"> Boutique Lyon Business</div>
+                <div class="as-desc">📍 Madina · Vente iPhone · Meilleurs prix de Conakry</div>
+            </div>
+        </div>
+        <div class="ad-dots">
+            <div class="ap-dot active"></div>
+            <div class="ap-dot"></div>
+            <div class="ap-dot"></div>
+            <div class="ap-dot"></div>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- LEAFLET -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+    // ── INIT FIREBASE ──
+    let db, MOTARDS_REF, REQUEST_REF;
+    function fbStatus(msg, color) {
+        const el = document.getElementById('fb-status-bar');
+        el.textContent = msg; el.style.background = color.bg; el.style.color = color.fg;
+        if (color.hide) setTimeout(() => el.style.display = 'none', 4000);
+    }
+    try {
+        if (FIREBASE_CONFIG.apiKey === 'VOTRE_API_KEY_ICI') throw new Error('not configured');
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db          = firebase.database();
+        MOTARDS_REF = db.ref('sayon_moto/motards');
+        REQUEST_REF = db.ref('sayon_moto/requests/current');
+        db.ref('.info/connected').on('value', snap => {
+            if (snap.val() === true) {
+                fbStatus('✅ Firebase connecté – Sync en temps réel actif', {bg:'#e8f5e9', fg:'#2e7d32', hide:true});
+            } else {
+                fbStatus('⚠️ Firebase déconnecté – Vérifiez votre connexion internet', {bg:'#fff3e0', fg:'#e65100', hide:false});
+            }
+        });
+        db.ref('sayon_moto/_test').set(Date.now())
+            .then(() => db.ref('sayon_moto/_test').remove())
+            .catch(() => fbStatus('🔴 Règles Firebase : accès refusé ! → Firebase Console → Realtime Database → Règles → ".read":true, ".write":true → Publier', {bg:'#fff3f3', fg:'#c62828', hide:false}));
+    } catch(e) {
+        document.getElementById('fb-error').style.display = 'block';
+        fbStatus('🔴 Firebase non configuré – Remplissez firebase-config.js', {bg:'#fff3f3', fg:'#c62828', hide:false});
+    }
+
+    // ── GPS ──
+    let motardMap = null, motardSelfMarker = null, motardClientMarker = null;
+    let motardGpsWatchId = null, myMotardLat = null, myMotardLng = null, myMotardAcc = null;
+
+    // Guinée — frontières approximatives
+    const GN_BOUNDS_M = [[6.5, -15.5], [12.8, -7.5]];
+    const GN_CENTER_M = [9.5370, -13.6773]; // Conakry
+
+    function _okM(lat, lng) {
+        return typeof lat==='number' && typeof lng==='number' &&
+               isFinite(lat) && isFinite(lng) &&
+               !(lat===0 && lng===0) && lat>=-90 && lat<=90;
+    }
+    function _inGN(lat, lng) {
+        return lat>=6.5 && lat<=13.0 && lng>=-15.5 && lng<=-7.0;
+    }
+
+    function initMotardMap() {
+        const container = document.getElementById('motard-map');
+        if (!container) return;
+        if (motardMap) { motardMap.remove(); motardMap = null; }
+        motardSelfMarker = null; motardClientMarker = null;
+        motardMap = L.map(container, {
+            zoomControl: true, attributionControl: false,
+            maxBounds: GN_BOUNDS_M, maxBoundsViscosity: 1.0
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, minZoom: 9
+        }).addTo(motardMap);
+        motardMap.setView(GN_CENTER_M, 13);
+    }
+
+    function startMotardGPS() {
+        if (!navigator.geolocation) { showMotardGpsMsg('⚠️ GPS non supporté', ''); return; }
+        showMotardGpsMsg('📡 Recherche GPS en cours…', '');
+        motardGpsWatchId = navigator.geolocation.watchPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            if (!_okM(lat, lng)) return;
+            if (!_inGN(lat, lng)) {
+                showMotardGpsMsg('⚠️ Position hors de la Guinée — GPS incorrect ?', '');
+                return;
+            }
+            myMotardLat = lat; myMotardLng = lng;
+            myMotardAcc = Math.round(pos.coords.accuracy || 30);
+            if (REQUEST_REF) REQUEST_REF.update({ motardLat: myMotardLat, motardLng: myMotardLng, motardAcc: myMotardAcc });
+            if (motardMap) {
+                if (motardSelfMarker) motardSelfMarker.setLatLng([myMotardLat, myMotardLng]);
+                else addMotardSelfMarker();
+            }
+            fitMotardMap();
+            if (motardClientMarker) {
+                const c = motardClientMarker.getLatLng();
+                updateMotardDistance(c.lat, c.lng);
+            }
+        }, err => {
+            const m = {1:'⚠️ GPS refusé — activez la localisation', 2:'⚠️ Signal GPS indisponible', 3:'⚠️ Délai GPS dépassé'};
+            showMotardGpsMsg(m[err.code] || '⚠️ Erreur GPS', '');
+        }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
+    }
+
+    function stopMotardGPS() {
+        if (motardGpsWatchId !== null) { navigator.geolocation.clearWatch(motardGpsWatchId); motardGpsWatchId = null; }
+        myMotardLat = null; myMotardLng = null;
+        motardSelfMarker = null; motardClientMarker = null;
+        if (motardMap) { motardMap.remove(); motardMap = null; }
+    }
+
+    function addMotardSelfMarker() {
+        if (!motardMap || !_okM(myMotardLat, myMotardLng)) return;
+        const icon = L.divIcon({
+            html: '<div style="background:#1a1a2e;width:36px;height:36px;border-radius:50%;border:3px solid #FFD700;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 12px rgba(0,0,0,.4)">🏍️</div>',
+            className: '', iconSize: [36,36], iconAnchor: [18,18]
+        });
+        motardSelfMarker = L.marker([myMotardLat, myMotardLng], {icon}).addTo(motardMap);
+        motardSelfMarker.bindPopup('📍 Vous (motard)').openPopup();
+        motardMap.setView([myMotardLat, myMotardLng], 17);
+        showMotardGpsMsg('📍 GPS acquis · Précision ±' + (myMotardAcc||'?') + ' m', '');
+    }
+
+    function updateClientOnMap(cLat, cLng) {
+        if (!motardMap) return;
+        if (!_okM(cLat, cLng) || !_inGN(cLat, cLng)) return;
+        const icon = L.divIcon({
+            html: '<div style="background:#FF6B00;width:32px;height:32px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 12px rgba(0,0,0,.4)">👤</div>',
+            className: '', iconSize: [32,32], iconAnchor: [16,16]
+        });
+        if (motardClientMarker) motardClientMarker.setLatLng([cLat, cLng]);
+        else {
+            motardClientMarker = L.marker([cLat, cLng], {icon}).addTo(motardMap);
+            motardClientMarker.bindPopup('👤 Position du client');
+        }
+        fitMotardMap();
+        updateMotardDistance(cLat, cLng);
+    }
+
+    function fitMotardMap() {
+        if (!motardMap) return;
+        const pts = [];
+        if (_okM(myMotardLat, myMotardLng)) pts.push([myMotardLat, myMotardLng]);
+        if (motardClientMarker) { const c=motardClientMarker.getLatLng(); pts.push([c.lat,c.lng]); }
+        if (pts.length === 2) motardMap.fitBounds(pts, {padding:[40,40], maxZoom:18, animate:true});
+        else if (pts.length === 1) motardMap.setView(pts[0], 17);
+    }
+
+    function updateMotardDistance(cLat, cLng) {
+        if (!_okM(myMotardLat, myMotardLng)) return;
+        const dist = haversineMotard(myMotardLat, myMotardLng, cLat, cLng);
+        // Seuils adaptés à la précision GPS réelle (smartphone ±15-50m typique)
+        const acc = myMotardAcc || 30;
+        const seuilArrive = Math.max(60, acc * 2);
+        const seuilProche = Math.max(200, acc * 5);
+        const accTxt = ' (GPS ±' + acc + 'm)';
+        if (dist <= seuilArrive) showMotardGpsMsg('🏁 Vous êtes arrivé chez le client !' + accTxt, 'arrived');
+        else if (dist <= seuilProche) showMotardGpsMsg('🔔 Client à ' + Math.round(dist) + ' m — Presque arrivé !' + accTxt, 'near');
+        else if (dist < 1000) showMotardGpsMsg('📍 Client à ' + Math.round(dist) + ' m de vous' + accTxt, '');
+        else showMotardGpsMsg('📍 Client à ' + (dist/1000).toFixed(1) + ' km de vous', '');
+    }
+
+    function showMotardGpsMsg(msg, cls) {
+        const el = document.getElementById('motard-gps-msg');
+        if (!el) return;
+        el.textContent = msg; el.className = 'gps-info' + (cls ? ' '+cls : '');
+    }
+
+    function haversineMotard(la1,lo1,la2,lo2) {
+        const R=6371000, p1=la1*Math.PI/180, p2=la2*Math.PI/180;
+        const dp=(la2-la1)*Math.PI/180, dl=(lo2-lo1)*Math.PI/180;
+        const a=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+        return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    }
+
+    // ── PROFIL ──
+    let motardId = localStorage.getItem('motard_id');
+    if (!motardId) { motardId = 'M' + Date.now().toString(36).toUpperCase(); localStorage.setItem('motard_id', motardId); }
+    let motardName  = localStorage.getItem('motard_name')  || '';
+    let motardPhone = localStorage.getItem('motard_phone') || '';
+    let isOnline    = false;
+    let currentReqId = null;
+    let initialLoad  = true;
+    let acceptedDest = '';
+
+    window.addEventListener('load', async () => {
+        const saved = localStorage.getItem('motard_sess');
+        if (saved && db) {
+            try {
+                const s    = JSON.parse(saved);
+                const snap = await db.ref('sayon_moto/comptes/motards/' + s.key).once('value');
+                const acc  = snap.val();
+                if (acc) { mOnAuthOK(acc); startRequestListener(); return; }
+            } catch(e) {}
+        }
+        document.getElementById('state-auth').classList.remove('hidden');
+        startRequestListener();
+    });
+    window.addEventListener('beforeunload', () => { if (isOnline && MOTARDS_REF) MOTARDS_REF.child(motardId).remove(); });
+
+    function registerMotard() {
+        const n = document.getElementById('inp-name').value.trim();
+        const p = document.getElementById('inp-phone').value.trim();
+        if (!n) { showToast('⚠️ Entrez votre nom'); return; }
+        motardName = n; motardPhone = p;
+        localStorage.setItem('motard_name', n); localStorage.setItem('motard_phone', p);
+        addToMotardList(); showProfileDisplay(); setOnlineUI(true);
+        showToast('✅ Vous êtes en ligne ! Les clients peuvent vous voir.');
+        startLiveUpdate();
+    }
+
+    function goOnlineAuto() { addToMotardList(); setOnlineUI(true); startLiveUpdate(); }
+
+    function goOffline() {
+        isOnline = false;
+        if (MOTARDS_REF) MOTARDS_REF.child(motardId).remove();
+        setOnlineUI(false); showToast('⏸ Vous êtes hors ligne');
+    }
+
+    function setOnlineUI(on) {
+        isOnline = on;
+        const dot = document.getElementById('s-dot');
+        const lbl = document.getElementById('s-label');
+        const sub = document.getElementById('s-sub');
+        if (on) {
+            dot.className = 's-dot s-dot-on';
+            lbl.textContent = '🟢 En ligne';
+            sub.textContent = 'Visible par tous les clients';
+        } else {
+            dot.className = 's-dot s-dot-off';
+            lbl.textContent = '⚫ Hors ligne';
+            sub.textContent = 'Reconnectez-vous pour reprendre';
+        }
+    }
+
+    function addToMotardList() {
+        if (!MOTARDS_REF) return;
+        const ref = MOTARDS_REF.child(motardId);
+        ref.set({ id:motardId, name:motardName, phone:motardPhone||null, status:'available', registeredAt:Date.now(), lastSeen:Date.now() });
+        ref.onDisconnect().remove();
+        isOnline = true;
+        if (REQUEST_REF) REQUEST_REF.once('value', snapshot => {
+            const r = snapshot.val();
+            if (r && r.status === 'pending') handleIncoming(r);
+        });
+    }
+
+    function startLiveUpdate() {
+        setInterval(() => {
+            if (!isOnline || !MOTARDS_REF) return;
+            MOTARDS_REF.child(motardId).update({ lastSeen: Date.now() });
+        }, 60000);
+    }
+
+    function showProfileDisplay() {
+        document.getElementById('disp-name').textContent  = motardName;
+        document.getElementById('disp-phone').textContent = motardPhone || 'Aucun numéro';
+        document.getElementById('profile-form').classList.add('hidden');
+        document.getElementById('profile-display').classList.remove('hidden');
+    }
+
+    function startRequestListener() {
+        if (!REQUEST_REF) return;
+        REQUEST_REF.on('value', snapshot => {
+            const r = snapshot.val();
+            if (initialLoad) {
+                initialLoad = false;
+                if (r && r.status === 'pending' && isOnline) handleIncoming(r);
+                return;
+            }
+            if (!r) {
+                if (currentReqId && !document.getElementById('state-request').classList.contains('hidden')) {
+                    showToast('❌ Le client a annulé la demande');
+                    showState('idle'); hideBadge(); currentReqId = null;
+                }
+                return;
+            }
+            if (r.status === 'pending' && isOnline) handleIncoming(r);
+            if (!document.getElementById('state-accepted').classList.contains('hidden')) {
+                if (r.clientLat && r.clientLng) updateClientOnMap(r.clientLat, r.clientLng);
+            }
+        });
+    }
+
+    function handleIncoming(req) {
+        if (req.targetMotardId && req.targetMotardId !== motardId) return;
+        if (currentReqId === req.id) return;
+        currentReqId = req.id;
+        showNewRequest(req);
+    }
+
+    function showNewRequest(req) {
+        document.getElementById('rq-name').textContent = req.clientName || 'Client anonyme';
+        document.getElementById('rq-dest').textContent = req.destination;
+        const t = new Date(req.createdAt);
+        document.getElementById('rq-time').textContent = t.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        const cb = document.getElementById('btn-call-client');
+        if (req.clientPhone) {
+            cb.href = `tel:${req.clientPhone}`; cb.textContent = `📞 Appeler ${req.clientName} · ${req.clientPhone}`; cb.classList.remove('hidden');
+        } else cb.classList.add('hidden');
+        acceptedDest = req.destination;
+        showState('request'); showBadge(); playNotif();
+        showToast('🔔 Nouvelle demande de course !');
+    }
+
+    function acceptRequest() {
+        if (!motardName) { showToast('⚠️ Enregistrez d\'abord votre profil'); return; }
+        if (!REQUEST_REF) return;
+        if (MOTARDS_REF) MOTARDS_REF.child(motardId).update({ status:'busy' });
+        REQUEST_REF.update({ status:'accepted', motardName:motardName, motardPhone:motardPhone||null, acceptedAt:Date.now() });
+        document.getElementById('acc-dest').textContent = acceptedDest;
+        showState('accepted'); hideBadge(); currentReqId = null;
+        showToast('✅ Course acceptée !');
+        setTimeout(() => {
+            initMotardMap();
+            startMotardGPS();
+            REQUEST_REF.once('value', snap => {
+                const r = snap.val();
+                if (r && r.clientLat && r.clientLng) updateClientOnMap(r.clientLat, r.clientLng);
+            });
+        }, 300);
+    }
+
+    function refuseRequest() {
+        if (!REQUEST_REF) return;
+        REQUEST_REF.update({ status:'refused' });
+        showState('idle'); hideBadge(); currentReqId = null;
+        showToast('Course refusée');
+    }
+
+    function finishRide() {
+        stopMotardGPS();
+        if (REQUEST_REF) REQUEST_REF.remove();
+        if (isOnline && MOTARDS_REF) MOTARDS_REF.child(motardId).update({ status:'available', lastSeen:Date.now() });
+        showState('idle'); showToast('🏁 Course terminée !');
+    }
+
+    function showState(s) {
+        ['idle','request','accepted'].forEach(k => document.getElementById('state-'+k).classList.add('hidden'));
+        document.getElementById('state-'+s).classList.remove('hidden');
+    }
+    function showBadge() { document.getElementById('notif-badge').classList.remove('hidden'); }
+    function hideBadge()  { document.getElementById('notif-badge').classList.add('hidden'); }
+    function scrollToReq() { const e=document.getElementById('state-request'); if(!e.classList.contains('hidden')) e.scrollIntoView({behavior:'smooth'}); }
+    function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500); }
+
+    // ── COMPTES MOTARD ──
+    function _mKey(phone) { return 'm' + phone.replace(/\D/g,''); }
+
+    async function _mHashPw(pw, phone) {
+        const data = new TextEncoder().encode(pw + phone.replace(/\D/g,'') + '_smte25');
+        const buf  = await crypto.subtle.digest('SHA-256', data);
+        return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function mSwitchTab(tab) {
+        const login = tab === 'login';
+        document.getElementById('m-login-form').classList.toggle('hidden', !login);
+        document.getElementById('m-register-form').classList.toggle('hidden', login);
+        document.getElementById('tab-login').classList.toggle('active', login);
+        document.getElementById('tab-register').classList.toggle('active', !login);
+        _mMsg('', '');
+    }
+    function _mMsg(msg, type) {
+        const el = document.getElementById('m-auth-msg');
+        if (!msg) { el.classList.add('hidden'); return; }
+        el.textContent = msg; el.className = 'auth-err ' + type; el.classList.remove('hidden');
+    }
+
+    async function mDoLogin() {
+        const phone = document.getElementById('ml-phone').value.trim();
+        const pw    = document.getElementById('ml-pass').value;
+        if (!phone) { _mMsg('⚠️ Entrez votre téléphone', 'err'); return; }
+        if (!pw)    { _mMsg('⚠️ Entrez votre mot de passe', 'err'); return; }
+        if (!db)    { _mMsg('⚠️ Firebase non connecté', 'err'); return; }
+        _mMsg('⏳ Connexion en cours…', 'ok');
+        try {
+            const snap = await db.ref('sayon_moto/comptes/motards/' + _mKey(phone)).once('value');
+            const acc  = snap.val();
+            if (!acc) { _mMsg('❌ Aucun compte pour ce numéro — créez un compte', 'err'); return; }
+            const hash = await _mHashPw(pw, phone);
+            if (hash !== acc.passwordHash) { _mMsg('❌ Mot de passe incorrect', 'err'); return; }
+            mOnAuthOK(acc);
+        } catch(e) { _mMsg('⚠️ Erreur : ' + e.message, 'err'); }
+    }
+
+    async function mDoRegister() {
+        const name  = document.getElementById('mr-name').value.trim();
+        const phone = document.getElementById('mr-phone').value.trim();
+        const pw    = document.getElementById('mr-pass').value;
+        const conf  = document.getElementById('mr-confirm').value;
+        if (!name)         { _mMsg('⚠️ Entrez votre nom', 'err'); return; }
+        if (!phone)        { _mMsg('⚠️ Entrez votre téléphone', 'err'); return; }
+        if (phone.replace(/\D/g,'').length < 8) { _mMsg('⚠️ Numéro invalide', 'err'); return; }
+        if (!pw)           { _mMsg('⚠️ Choisissez un mot de passe', 'err'); return; }
+        if (pw.length < 4) { _mMsg('⚠️ Mot de passe trop court (min 4 car.)', 'err'); return; }
+        if (pw !== conf)   { _mMsg('❌ Mots de passe différents', 'err'); return; }
+        if (!db)           { _mMsg('⚠️ Firebase non connecté', 'err'); return; }
+        _mMsg('⏳ Création du compte…', 'ok');
+        try {
+            const key  = _mKey(phone);
+            const snap = await db.ref('sayon_moto/comptes/motards/' + key).once('value');
+            if (snap.val()) { _mMsg('❌ Un compte existe déjà pour ce numéro', 'err'); return; }
+            const hash = await _mHashPw(pw, phone);
+            const acc  = { name, phone, passwordHash: hash, createdAt: Date.now() };
+            await db.ref('sayon_moto/comptes/motards/' + key).set(acc);
+            mOnAuthOK(acc);
+        } catch(e) { _mMsg('⚠️ Erreur : ' + e.message, 'err'); }
+    }
+
+    function mOnAuthOK(acc) {
+        motardName  = acc.name;
+        motardPhone = acc.phone;
+        localStorage.setItem('motard_sess', JSON.stringify({ phone: acc.phone, key: _mKey(acc.phone) }));
+        document.getElementById('state-auth').classList.add('hidden');
+        document.getElementById('motard-profile-card').classList.remove('hidden');
+        document.getElementById('state-idle').classList.remove('hidden');
+        showProfileDisplay();
+        if (!isOnline) goOnlineAuto();
+    }
+
+    function mDoLogout() {
+        localStorage.removeItem('motard_sess');
+        goOffline();
+        motardName = ''; motardPhone = '';
+        document.getElementById('motard-profile-card').classList.add('hidden');
+        document.getElementById('state-idle').classList.add('hidden');
+        document.getElementById('state-request').classList.add('hidden');
+        document.getElementById('state-accepted').classList.add('hidden');
+        document.getElementById('ml-phone').value = '';
+        document.getElementById('ml-pass').value  = '';
+        _mMsg('', '');
+        mSwitchTab('login');
+        document.getElementById('state-auth').classList.remove('hidden');
+    }
+    function playNotif() {
+        try {
+            const ctx=new (window.AudioContext||window.webkitAudioContext)();
+            [523,659,784].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=f; o.type='sine'; const t=ctx.currentTime+i*0.18; g.gain.setValueAtTime(0.35,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.25); o.start(t); o.stop(t+0.28); });
+        } catch(e){}
+    }
+</script>
+<script>
+(function(){
+    const slides = document.querySelectorAll('.ad-slide');
+    const dots   = document.querySelectorAll('.ap-dot');
+    let cur = 0;
+    setInterval(() => {
+        const prev = cur;
+        slides[prev].classList.remove('active'); slides[prev].classList.add('leaving');
+        dots[prev].classList.remove('active');
+        cur = (cur + 1) % slides.length;
+        slides[cur].classList.add('active'); dots[cur].classList.add('active');
+        setTimeout(() => slides[prev].classList.remove('leaving'), 700);
+    }, 4200);
+})();
+</script>
+</body>
+</html>

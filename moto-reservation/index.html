@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAYON MOTO TAXI EXPRESS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d0d1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* ══════════ TICKER HORIZONTAL ══════════ */
+        .ticker-bar {
+            width: 100%;
+            background: rgba(255,107,0,0.1);
+            border-bottom: 1px solid rgba(255,107,0,0.18);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            height: 38px;
+            flex-shrink: 0;
+        }
+        .ticker-label {
+            background: linear-gradient(135deg,#FF6B00,#ff8c42);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 0 0.9rem;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .ticker-wrap { overflow: hidden; flex: 1; }
+        .ticker-track {
+            display: flex;
+            animation: tickerScroll 32s linear infinite;
+            width: max-content;
+        }
+        .ticker-track:hover { animation-play-state: paused; }
+        @keyframes tickerScroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        .ti {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0 1.4rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            height: 38px;
+        }
+        .ti-fanta { color: #FFAB40; }
+        .ti-coca  { color: #FF8A80; font-family: 'Dancing Script',serif; font-size: 0.95rem; }
+        .ti-ira   { color: #69F0AE; }
+        .ti-lyon  { color: #90CAF9; }
+
+        /* ══════════ HERO ══════════ */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1.5rem 1rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .logo-wrap {
+            position: relative;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-glow {
+            position: absolute;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,107,0,0.35) 0%, transparent 70%);
+            animation: glowPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%,100% { transform: scale(1); opacity: 0.6; }
+            50%      { transform: scale(1.4); opacity: 1; }
+        }
+        .logo-emoji {
+            font-size: 5.5rem;
+            position: relative;
+            z-index: 1;
+            animation: bikeFloat 3s ease-in-out infinite;
+            filter: drop-shadow(0 8px 20px rgba(255,107,0,0.5));
+        }
+        @keyframes bikeFloat {
+            0%,100% { transform: translateY(0) rotate(-4deg); }
+            50%      { transform: translateY(-14px) rotate(4deg); }
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 900;
+            color: white;
+            text-align: center;
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.45rem;
+        }
+        h1 .hl {
+            background: linear-gradient(135deg, #FF6B00, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tagline {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ══════════ ROLE CARDS ══════════ */
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            width: 100%;
+            margin-bottom: 1.2rem;
+        }
+        .role-card {
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid rgba(255,255,255,0.07);
+            border-radius: 24px;
+            padding: 2rem 1rem 1.8rem;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+            backdrop-filter: blur(4px);
+        }
+        .role-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,107,0,0.0), rgba(255,107,0,0.15));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .role-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF6B00, #FFD700);
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.35s;
+        }
+        .role-card:hover { border-color: rgba(255,107,0,0.5); transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,107,0,0.1); }
+        .role-card:hover::before { opacity: 1; }
+        .role-card:hover::after  { transform: scaleX(1); }
+        .role-card:active { transform: translateY(-3px) scale(0.98); }
+        .rc-icon { font-size: 3rem; margin-bottom: 0.9rem; position: relative; z-index: 1; }
+        .rc-title { color: white; font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; position: relative; z-index: 1; }
+        .rc-sub { color: rgba(255,255,255,0.3); font-size: 0.7rem; margin-top: 0.35rem; text-align: center; position: relative; z-index: 1; }
+        .rc-arrow {
+            position: absolute;
+            bottom: 1rem; right: 1rem;
+            width: 26px; height: 26px;
+            background: rgba(255,107,0,0.12);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,107,0,0.6);
+            font-size: 0.75rem;
+            transition: all 0.25s;
+        }
+        .role-card:hover .rc-arrow { background: #FF6B00; color: white; }
+
+        .hint {
+            color: rgba(255,255,255,0.12);
+            font-size: 0.68rem;
+            text-align: center;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ══════════ AD CAROUSEL ══════════ */
+        .ad-section {
+            width: 100%;
+            max-width: 500px;
+            padding: 0 1.5rem 2.5rem;
+        }
+        .ad-sec-label {
+            font-size: 0.58rem;
+            color: rgba(255,255,255,0.12);
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            text-align: center;
+            margin-bottom: 0.65rem;
+            font-weight: 700;
+        }
+        .ad-carousel {
+            position: relative;
+            height: 118px;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        .ad-slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.1rem 1.4rem;
+            transform: translateY(110%);
+            opacity: 0;
+            transition: transform 0.65s cubic-bezier(0.4,0,0.2,1), opacity 0.5s;
+        }
+        .ad-slide.active  { transform: translateY(0);    opacity: 1; }
+        .ad-slide.leaving { transform: translateY(-110%); opacity: 0; transition-timing-function: ease-in; transition-duration: 0.55s; }
+
+        .as-fanta { background: linear-gradient(135deg,#FF6A00,#EE8A1A); }
+        .as-coca  { background: linear-gradient(135deg,#B71C1C,#E53935); }
+        .as-ira   { background: linear-gradient(135deg,#1B5E20,#43A047); }
+        .as-lyon  { background: linear-gradient(135deg,#1a1a1a,#333); border: 1px solid rgba(255,255,255,0.08); }
+
+        .as-brand { font-size: 1.35rem; font-weight: 900; color: white; margin-bottom: 0.2rem; line-height: 1.1; }
+        .as-brand.f-fanta { font-family: 'Arial Rounded MT Bold','Arial Black',sans-serif; }
+        .as-brand.f-coca  { font-family: 'Dancing Script',serif; font-size: 1.65rem; }
+        .as-desc  { font-size: 0.74rem; color: rgba(255,255,255,0.82); font-weight: 500; }
+        .as-badge {
+            position: absolute;
+            top: 0.75rem; right: 0.8rem;
+            background: rgba(255,255,255,0.18);
+            color: white;
+            font-size: 0.58rem;
+            font-weight: 900;
+            padding: 0.18rem 0.55rem;
+            border-radius: 20px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .ad-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.45rem;
+            margin-top: 0.75rem;
+        }
+        .ap-dot {
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.12);
+            transition: all 0.4s;
+            width: 16px;
+            cursor: pointer;
+        }
+        .ap-dot.active { background: #FF6B00; width: 30px; }
+    </style>
+</head>
+<body>
+
+<!-- ══ TICKER ══ -->
+<div class="ticker-bar">
+    <span class="ticker-label">▶ Pub</span>
+    <div class="ticker-wrap">
+        <div class="ticker-track">
+            <span class="ti ti-fanta">🍊 Fanta · Fraîche &amp; Pétillante</span>
+            <span class="ti ti-coca">🥤 Coca-Cola · La vraie saveur</span>
+            <span class="ti ti-ira">🍹 JUSS IRA · 100% Fruits naturels · Guinée</span>
+            <span class="ti ti-lyon"> iPhone · BOUTIQUE LYON BUSINESS · Madina</span>
+            <span class="ti ti-fanta">🍊 Fanta · Fraîche &amp; Pétillante</span>
+            <span class="ti ti-coca">🥤 Coca-Cola · La vraie saveur</span>
+            <span class="ti ti-ira">🍹 JUSS IRA · 100% Fruits naturels · Guinée</span>
+            <span class="ti ti-lyon"> iPhone · BOUTIQUE LYON BUSINESS · Madina</span>
+        </div>
+    </div>
+</div>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+    <div class="logo-wrap">
+        <div class="logo-glow"></div>
+        <span class="logo-emoji">🏍️</span>
+    </div>
+    <h1>SAYON MOTO<br><span class="hl">TAXI EXPRESS</span></h1>
+    <p class="tagline">Rapide · Fiable · Accessible</p>
+
+    <div class="role-grid">
+        <a href="client.html" class="role-card">
+            <span class="rc-icon">👤</span>
+            <div class="rc-title">Je suis<br>Client</div>
+            <div class="rc-sub">Commander un motard</div>
+            <div class="rc-arrow">→</div>
+        </a>
+        <a href="motard.html" class="role-card">
+            <span class="rc-icon">🏍️</span>
+            <div class="rc-title">Je suis<br>Motard</div>
+            <div class="rc-sub">Recevoir des courses</div>
+            <div class="rc-arrow">→</div>
+        </a>
+    </div>
+
+    <p class="hint">Ouvrez chaque page dans un navigateur ou appareil différent.<br>Connexion Firebase requise pour la synchronisation.</p>
+</div>
+
+<!-- ══ AD CAROUSEL ══ -->
+<div class="ad-section">
+    <p class="ad-sec-label">▶ Publicité · Nos partenaires</p>
+    <div class="ad-carousel">
+        <div class="ad-slide as-fanta active">
+            <span class="as-badge">Partenaire</span>
+            <div class="as-brand f-fanta">🍊 Fanta</div>
+            <div class="as-desc">Fraîche, Pétillante &amp; Délicieuse — Disponible partout</div>
+        </div>
+        <div class="ad-slide as-coca">
+            <span class="as-badge">Partenaire</span>
+            <div class="as-brand f-coca">Coca-Cola</div>
+            <div class="as-desc">🥤 La vraie saveur originale depuis 1886</div>
+        </div>
+        <div class="ad-slide as-ira">
+            <span class="as-badge">Partenaire</span>
+            <div class="as-brand">🍹 JUSS IRA</div>
+            <div class="as-desc">Jus 100% naturels · Vitaminé &amp; Sain · Fait en Guinée</div>
+        </div>
+        <div class="ad-slide as-lyon">
+            <span class="as-badge">Partenaire</span>
+            <div class="as-brand"> Boutique Lyon Business</div>
+            <div class="as-desc">📍 Madina · Vente iPhone · Meilleurs prix de Conakry</div>
+        </div>
+    </div>
+    <div class="ad-dots">
+        <div class="ap-dot active"></div>
+        <div class="ap-dot"></div>
+        <div class="ap-dot"></div>
+        <div class="ap-dot"></div>
+    </div>
+</div>
+
+<script>
+(function(){
+    const slides = document.querySelectorAll('.ad-slide');
+    const dots   = document.querySelectorAll('.ap-dot');
+    let cur = 0;
+    setInterval(() => {
+        const prev = cur;
+        slides[prev].classList.remove('active');
+        slides[prev].classList.add('leaving');
+        dots[prev].classList.remove('active');
+        cur = (cur + 1) % slides.length;
+        slides[cur].classList.add('active');
+        dots[cur].classList.add('active');
+        setTimeout(() => slides[prev].classList.remove('leaving'), 700);
+    }, 4200);
+})();
+</script>
+</body>
+</html>
